@@ -23,7 +23,7 @@ const registerUser=asyncHandler(async(req,res)=>{
     //check for user creation 
     //return the user - if successfully created
     const {fullname, username, email, password} = req.body;
-    console.log("email:",email)
+    // console.log("email:",email)
 
     if(
         [fullname,email,username,password].some((field)=>field?.trim()==="")
@@ -31,8 +31,8 @@ const registerUser=asyncHandler(async(req,res)=>{
         throw new ApiError(400, "All fields are required");
     }
 
-//check user is already exit or nhgfdzot 
-   const existedUser= User.findOne({
+//check user is already exit or not 
+   const existedUser= await User.findOne({
         $or:[{username},{email}]
     })
     if(existedUser){
@@ -42,9 +42,14 @@ const registerUser=asyncHandler(async(req,res)=>{
 
     //cover image and avatar are required
    const avatarLocalPath= req.files?.avatar[0]?.path;
-   const coverImageLocalPath= req.files?.coverImage[0]?.path;
-    console.log("avatarLocalPath:",avatarLocalPath)
-    console.log("coverImageLocalPath:",coverImageLocalPath)
+  
+   //const coverImageLocalPath= req.files?.coverImage[0]?.path;
+   let coverImageLocalPath;
+   if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
+         coverImageLocalPath = req.files.coverImage[0].path;
+   }
+    // console.log("avatarLocalPath:",avatarLocalPath)
+    // console.log("coverImageLocalPath:",coverImageLocalPath)
 
     if (!avatarLocalPath ){
         throw new ApiError(400, "Avatar  are required");
@@ -53,8 +58,8 @@ const registerUser=asyncHandler(async(req,res)=>{
     //cloudinary upload
     const avatar=await uploadOnCloudinary(avatarLocalPath)
     const coverImage=await uploadOnCloudinary(coverImageLocalPath)
-    console.log("avatar:",avatar)
-    console.log("coverImage:",coverImage)
+    // console.log("avatar:",avatar)
+    // console.log("coverImage:",coverImage)
 
     if(!avatar ){
         throw new ApiError(500, "Error while uploading image to cloudinary");
