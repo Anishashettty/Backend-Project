@@ -4,6 +4,7 @@ import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
+
 const generateAccessAndREfreshTokens=async (userId)=>
     {
    try{
@@ -141,7 +142,9 @@ const loginUser = asyncHandler(async (req, res) => {
   }
 
   const{refreshToken,accessToken}= await generateAccessAndREfreshTokens(user._id)
-   
+  // console.log("Access Token:", accessToken);
+  // console.log("Refresh Token:", refreshToken);
+  
 
     //send cookies
    const loggedUser=await User.findByIdAndUpdate(user._id).select("-password -refreshToken");
@@ -161,7 +164,9 @@ const loginUser = asyncHandler(async (req, res) => {
                 user:loggedUser,accessToken,refreshToken
             },
             "user logged in successfully"
+            
         )
+        
     )
 });
 
