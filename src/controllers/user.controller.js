@@ -3,6 +3,7 @@ import { ApiError } from "../utils/apiError.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import jwt from "jsonwebtoken"
 
 
 const generateAccessAndREfreshTokens=async (userId)=>
@@ -145,7 +146,7 @@ const loginUser = asyncHandler(async (req, res) => {
   // console.log("Access Token:", accessToken);
   // console.log("Refresh Token:", refreshToken);
   
-
+ 
     //send cookies
    const loggedUser=await User.findByIdAndUpdate(user._id).select("-password -refreshToken");
 
@@ -194,4 +195,52 @@ const logoutUser=asyncHandler(async(req,res)=>{
     .json(new ApiResponse(200, {}, "User logged out successfully"));
 })
 
-export { registerUser, loginUser,logoutUser };
+const refershAccessToken=asyncHandler(async(req,res)=>{
+  try {
+     const incomingRefreshToken= req.cookie.refreshToken || req.body
+     if(!incomingRefreshToken){//check it is !
+       throw new ApiError(401,"unauthorized request")
+     }
+     const decodedToken=jwt.verify(
+      incomingRefreshToken,
+      process.env.REFRESH_TOKEN_SECRET
+     )
+    const user=await User.findById(decodedToken?._id)
+    if(!user) {
+      throw new ApiError(404, "User not found");
+    }
+    if(user.refreshToken!==incomingRefreshToken){
+      throw new ApiError(401,"unauthorized request ,REFERSH TOKEN expires or invalid")
+    }
+  
+    const options={
+      httpOnly:true,
+      secure:true
+    }
+    
+   const {accessToken,newRefreshToken}= await generateAccessAndREfreshTokens(user._id)
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", newRefreshToken, options)
+      .json(
+        new ApiResponse(
+          200,
+          {
+            accessToken,
+            refreshToken,
+            newRefreshToken
+  
+          },
+          "Access token refreshed successfully"
+        )
+      );  
+  } catch (error) {
+    
+    throw new ApiError(401, "Unauthorized request, invalid or expired refresh token", error?.message);
+    
+  }
+
+})
+
+export { registerUser, loginUser,logoutUser ,refershAccessToken};
