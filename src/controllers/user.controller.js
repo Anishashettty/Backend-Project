@@ -198,7 +198,7 @@ const refershAccessToken = asyncHandler(async (req, res) => {
       incomingRefreshToken,
       process.env.REFRESH_TOKEN_SECRET
     );
-
+    
     const user = await User.findById(decodedToken?._id);
     if (!user) {
       throw new ApiError(404, "User not found");
@@ -213,7 +213,7 @@ const refershAccessToken = asyncHandler(async (req, res) => {
     const options = {
       httpOnly: true,
       secure: true,
-    }; 
+    };
 
     const { accessToken, newRefreshToken } =
       await generateAccessAndREfreshTokens(user._id);
